@@ -1,0 +1,65 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id         Int         @id @default(autoincrement())
+  name       String
+  email      String      @unique
+  photoUrl   String?     @map("photo_url")
+  campaigns  Campaign[]  @relation("OwnerCampaigns")
+  donations  Donation[]
+  comments   Comment[] 
+  createdAt  DateTime    @default(now())  @map("created_at")
+  updatedAt  DateTime    @updatedAt       @map("updated_at")
+}
+
+model Campaign {
+  id            Int         @id @default(autoincrement())
+  owner         User        @relation("OwnerCampaigns", fields: [ownerId], references: [id])
+  ownerId       Int         @map("owner_id")
+  description   String
+  goalAmount    BigInt      @map("goal_amount")
+  upiId         String      @map("upi_id")
+  currentAmount BigInt      @default(0)  @map("current_amount")
+  photoUrl      String?     @map("photo_url")
+  donations     Donation[]
+  comments      Comment[] 
+  createdAt     DateTime    @default(now())  @map("created_at")
+  updatedAt     DateTime    @updatedAt       @map("updated_at")
+}
+
+model Donation {
+  id         Int       @id @default(autoincrement())
+  user       User?     @relation(fields: [userId], references: [id])
+  userId     Int?      @map("user_id")
+  campaign   Campaign  @relation(fields: [campaignId], references: [id])
+  campaignId Int       @map("campaign_id")
+  amount     BigInt
+  donatedAt  DateTime  @default(now()) @map("donated_at")
+}
+
+model Comment {
+  id         Int       @id @default(autoincrement())
+  content    String
+  createdAt  DateTime  @default(now())
+  metadata   Json?
+  user       User      @relation(fields: [userId], references: [id])
+  userId     Int
+  campaign   Campaign  @relation(fields: [campaignId], references: [id])
+  campaignId Int
+}
+
+
+model ActionLog {
+  id             String    @id @default(uuid())
+  actionableId   String
+  actionableType String
+  description    String?
+  createdAt      DateTime  @default(now())
+}
